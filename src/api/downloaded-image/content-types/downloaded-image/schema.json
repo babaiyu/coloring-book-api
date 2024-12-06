@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "downloaded_images",
+  "info": {
+    "singularName": "downloaded-image",
+    "pluralName": "downloaded-images",
+    "displayName": "Downloaded Image",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "resource_id": {
+      "type": "uid",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

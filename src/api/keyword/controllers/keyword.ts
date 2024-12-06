@@ -15,6 +15,32 @@ const instance = axios.create({
   baseURL: BASE_URL,
 });
 
+// Checking expired token
+function isTokenExpired(expTimestamp: number) {
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  return currentTimestamp > expTimestamp;
+}
+
+// Checking expired token from URL
+function checkIsTokenExpired(url: string) {
+  const expMatch = url.match(/exp=(\d+)/);
+
+  if (expMatch) {
+    const expTimestamp = parseInt(expMatch[1], 10);
+
+    // Checking expiration of token
+    const expired = isTokenExpired(expTimestamp);
+
+    if (expired) {
+      return true; // Token is expired
+    } else {
+      return false; // Token still valid!
+    }
+  }
+
+  return true;
+}
+
 export default {
   // Get / Search by keyword
   async getKeyword(ctx) {
@@ -75,6 +101,7 @@ export default {
   },
   // Get asset by resource-id
   async getAsset(ctx) {
+    const apiDownloadedImage = "api::downloaded-image.downloaded-image";
     const { resource_id } = ctx?.query;
 
     // Giving error when resource_id not found
@@ -84,23 +111,79 @@ export default {
       return;
     }
 
+    // Get resource_id from database (table downloaded-image)
+    const findResourceID = await strapi
+      .documents(apiDownloadedImage)
+      .findFirst({
+        filters: {
+          resource_id: {
+            $eq: resource_id,
+          },
+        },
+      });
+
+    // Checking if resource_id is exist & token of Freepik image is not expired!
+    if (findResourceID && !checkIsTokenExpired(findResourceID?.url ?? "")) {
+      ctx.response.status = 200;
+      ctx.response.body = JSON.stringify({
+        data: [
+          {
+            filename: (findResourceID?.resource_id ?? 0).toString(),
+            url: findResourceID?.url,
+          },
+        ],
+      });
+      ctx.response.message = "Success";
+      return;
+    }
+
     // Get detail of resource_id
     try {
       const res = await instance.get(
         `/v1/resources/${resource_id}/download/${RESOURCE_FORMAT}`
       );
 
+      // Also save / update it to database
+      if (findResourceID) {
+        // Update it to database (if exist)
+        await strapi.documents(apiDownloadedImage).update({
+          documentId: findResourceID.documentId,
+          data: {
+            resource_id,
+            url: (res?.data?.data ?? [])[0]?.url ?? "",
+          },
+        });
+      } else {
+        // Save it to database (if not exist)
+        await strapi.documents(apiDownloadedImage).create({
+          data: {
+            resource_id,
+            url: (res?.data?.data ?? [])[0]?.url ?? "",
+          },
+          // status: "published",
+        });
+      }
+
       // Success return
       ctx.response.status = 200;
       ctx.response.body = JSON.stringify({
-        data: res?.data?.data ?? null,
+        data: res?.data?.data ?? [],
         meta: {},
       });
       ctx.response.message = "Success";
     } catch (error: any) {
       ctx.response.status = error?.response?.status ?? 400;
+      ctx.response.body = JSON.stringify({
+        data: null,
+        error: {
+          status: error?.response?.status ?? 400,
+          name: error?.message,
+          message:
+            error?.response?.data?.message ?? "Failed to get image detail!",
+        },
+      });
       ctx.response.message =
-        error?.response?.message ?? "Failed to get image detail!";
+        error?.response?.data?.message ?? "Failed to get image detail!";
     }
   },
 };
