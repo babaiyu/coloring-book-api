@@ -59,18 +59,23 @@ export default {
         page,
         term: name, // Search by slug name
         limit: LIMIT,
+        order: 'relevance',
         filters: {
           license: {
             freemium: 1,
             // premium: 0,
           },
           vector: {
-            type: "png", // 'jpg' | 'ai' | 'eps' | 'svg' | 'png'
-            style: "hand-drawn", // 'watercolor' | 'flat' | 'cartoon' | 'geometric' | 'gradient' | 'isometric' | '3d' | 'hand-drawn'
+            // 'jpg' | 'ai' | 'eps' | 'svg' | 'png'
+            type: "svg",
+            // 'watercolor' | 'flat' | 'cartoon' | 'geometric' | 'gradient' | 'isometric' | '3d' | 'hand-drawn'
+            style: "hand-drawn",
           },
           orientation: {
             square: 1, // Show a square orientation image
           },
+          // Only show from Freepik creators!
+          author: 23,
         },
       },
       { encodeValuesOnly: true }
