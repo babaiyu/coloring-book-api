@@ -5,7 +5,6 @@ import { isEmpty } from "lodash";
 const FREEPIK_KEY = process.env?.FREEPIK_KEY ?? "";
 const BASE_URL = process.env?.FREEPIK_BASE_URL ?? "";
 const LIMIT = 25;
-const RESOURCE_FORMAT = "png";
 
 // Create axios instance
 const instance = axios.create({
@@ -59,7 +58,7 @@ export default {
         page,
         term: name, // Search by slug name
         limit: LIMIT,
-        order: 'relevance',
+        order: "relevance",
         filters: {
           license: {
             freemium: 1,
@@ -144,9 +143,7 @@ export default {
 
     // Get detail of resource_id
     try {
-      const res = await instance.get(
-        `/v1/resources/${resource_id}/download/${RESOURCE_FORMAT}`
-      );
+      const res = await instance.get(`/v1/resources/${resource_id}/download`);
 
       // Also save / update it to database
       if (findResourceID) {
