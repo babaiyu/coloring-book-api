@@ -143,7 +143,7 @@ export default {
 
     // Get detail of resource_id
     try {
-      const res = await instance.get(`/v1/resources/${resource_id}/download`);
+      const res = await instance.get(`/v1/resources/${resource_id}/download/svg`);
 
       // Also save / update it to database
       if (findResourceID) {
