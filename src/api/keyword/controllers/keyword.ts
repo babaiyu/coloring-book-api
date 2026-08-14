@@ -1,6 +1,7 @@
 import axios from "axios";
 import qs from "qs";
 import { isEmpty } from "lodash";
+import { checkIsTokenExpired } from "../../../helpers/tokenChecker";
 
 const FREEPIK_KEY = process.env?.FREEPIK_KEY ?? "";
 const BASE_URL = process.env?.FREEPIK_BASE_URL ?? "";
@@ -9,36 +10,10 @@ const LIMIT = 25;
 // Create axios instance
 const instance = axios.create({
   headers: {
-    "x-freepik-api-key": FREEPIK_KEY,
+    "x-magnific-api-key": FREEPIK_KEY,
   },
   baseURL: BASE_URL,
 });
-
-// Checking expired token
-function isTokenExpired(expTimestamp: number) {
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  return currentTimestamp > expTimestamp;
-}
-
-// Checking expired token from URL
-function checkIsTokenExpired(url: string) {
-  const expMatch = url.match(/exp=(\d+)/);
-
-  if (expMatch) {
-    const expTimestamp = parseInt(expMatch[1], 10);
-
-    // Checking expiration of token
-    const expired = isTokenExpired(expTimestamp);
-
-    if (expired) {
-      return true; // Token is expired
-    } else {
-      return false; // Token still valid!
-    }
-  }
-
-  return true;
-}
 
 export default {
   // Get / Search by keyword
@@ -77,7 +52,7 @@ export default {
           author: 23,
         },
       },
-      { encodeValuesOnly: true }
+      { encodeValuesOnly: true },
     );
 
     // Finding image from Freepik API
@@ -143,7 +118,9 @@ export default {
 
     // Get detail of resource_id
     try {
-      const res = await instance.get(`/v1/resources/${resource_id}/download/svg`);
+      const res = await instance.get(
+        `/v1/resources/${resource_id}/download/svg`,
+      );
 
       // Also save / update it to database
       if (findResourceID) {
